@@ -25,8 +25,8 @@ def register_all_blueprints(app):
     """自动发现并注册应用程序中的所有蓝图"""
     # 定义蓝图所在的包路径
     blueprint_packages = [
-        'app.api',
-        'app.api.upload'
+        'app.api.upload',
+        'app.api.preprocess'
         # 根据需要添加其他包路径
     ]
 
