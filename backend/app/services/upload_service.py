@@ -3,6 +3,7 @@ import os
 import uuid
 from datetime import datetime
 import pandas as pd
+from flask import current_app
 from werkzeug.utils import secure_filename
 
 
@@ -10,7 +11,7 @@ class UploadService:
     """文件上传服务类"""
 
     @staticmethod
-    def save_file(file, upload_dir):
+    def save_file(file, upload_dir=None):
         """保存上传的文件
 
         Args:
@@ -20,23 +21,28 @@ class UploadService:
         Returns:
             dict: 包含文件信息的字典
         """
-        # 生成唯一文件名
+        if upload_dir is None:
+            upload_dir = os.path.join(current_app.root_path, 'tmp', 'uploads')
+
+            # 确保目录存在
+        os.makedirs(upload_dir, exist_ok=True)  # 自动创建目录
+
+        # 生成唯一文件名（保留原有逻辑）
         timestamp = datetime.now().strftime('%Y%m%d%H%M%S')
         unique_id = str(uuid.uuid4())[:8]
-        original_filename = secure_filename(file.filename)
-        filename = f"{timestamp}_{unique_id}_{original_filename}"
+        filename = f"{timestamp}_{unique_id}_{secure_filename(file.filename)}"
+        file_path = os.path.join(upload_dir, filename)
 
         # 保存文件
-        file_path = os.path.join(upload_dir, filename)
         file.save(file_path)
-
         return {
-            'original_name': original_filename,
+            'original_name': file.filename,
             'saved_name': filename,
             'path': file_path,
             'size': os.path.getsize(file_path),
             'upload_time': timestamp
         }
+
 
     @staticmethod
     def validate_file_type(filename):

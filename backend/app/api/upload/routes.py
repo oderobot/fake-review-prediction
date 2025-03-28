@@ -1,10 +1,10 @@
 # backend/app/api/upload/routes.py
 import os
-from flask import current_app, request, jsonify
-from . import upload_bp
+from flask import current_app, request, jsonify, Blueprint
 from backend.app.services.upload_service import UploadService
 
-
+# 创建蓝图
+upload_bp = Blueprint('upload', __name__, url_prefix='/api/upload')
 @upload_bp.route('/', methods=['POST'])
 def upload_file():
     """处理文件上传请求"""
@@ -28,8 +28,8 @@ def upload_file():
     try:
         # 保存文件
         upload_dir = os.path.join(os.path.dirname(os.path.dirname(os.path.dirname(__file__))), 'app', 'tmp', 'uploads')
-        file_info = UploadService.save_file(file, upload_dir)
-
+        # 在 routes.py 中调用时
+        file_info = UploadService.save_file(file)  # 不传 upload_dir，自动使用配置的路径
         # 返回上传成功的响应
         return jsonify({
             'status': 'success',
@@ -47,7 +47,7 @@ def upload_file():
 def validate_file():
     """验证上传的文件格式"""
     data = request.json
-    file_path = data.get('file_path')
+    file_path = data.get('file_path') or data.get('filepath')  # 兼容两种字段名
 
     if not file_path or not os.path.exists(file_path):
         return jsonify({
