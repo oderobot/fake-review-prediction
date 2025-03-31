@@ -26,7 +26,8 @@ def register_all_blueprints(app):
     # 定义蓝图所在的包路径
     blueprint_packages = [
         'app.api.upload',
-        'app.api.preprocess'
+        'app.api.preprocess',
+        'app.api.informer'
         # 根据需要添加其他包路径
     ]
 
