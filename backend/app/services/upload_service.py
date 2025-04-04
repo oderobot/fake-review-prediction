@@ -3,6 +3,7 @@ import os
 import uuid
 from datetime import datetime
 import pandas as pd
+import traceback
 from flask import current_app
 from werkzeug.utils import secure_filename
 
@@ -42,7 +43,6 @@ class UploadService:
             'size': os.path.getsize(file_path),
             'upload_time': timestamp
         }
-
 
     @staticmethod
     def validate_file_type(filename):
@@ -104,4 +104,41 @@ class UploadService:
             return {
                 'valid': False,
                 'message': f"验证文件时出错: {str(e)}"
+            }
+
+    @staticmethod
+    def get_full_file_data(file_path):
+        """读取文件的完整数据
+
+        Args:
+            file_path: 文件路径
+
+        Returns:
+            dict: 包含完整数据的字典
+        """
+        try:
+            # 根据文件类型读取数据
+            if file_path.endswith('.csv'):
+                df = pd.read_csv(file_path)
+            elif file_path.endswith(('.xlsx', '.xls')):
+                df = pd.read_excel(file_path)
+            else:
+                return {'valid': False, 'message': '不支持的文件类型'}
+
+            # 将日期列转换为日期类型
+            if 'date' in df.columns:
+                df['date'] = pd.to_datetime(df['date']).dt.strftime('%Y-%m-%d')
+
+            # 返回完整数据
+            return {
+                'valid': True,
+                'rows': len(df),
+                'columns': list(df.columns),
+                'data': df.to_dict('records')
+            }
+        except Exception as e:
+            return {
+                'valid': False,
+                'message': f"读取文件时出错: {str(e)}",
+                'traceback': traceback.format_exc()
             }

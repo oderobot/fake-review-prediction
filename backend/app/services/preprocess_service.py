@@ -1,8 +1,8 @@
 # backend/app/services/preprocess_service.py
 import pandas as pd
 import numpy as np
-import os
 from datetime import datetime, timedelta
+import os
 
 
 class PreprocessService:
@@ -15,7 +15,7 @@ class PreprocessService:
         Args:
             file_path: 原始文件路径
             output_dir: 输出目录，如果为None则使用原文件所在目录
-            prod_id: 可选，指定要分析的产品ID 这里传入的参数不是str 是 int
+            prod_id: 可选，指定要分析的产品ID
 
         Returns:
             dict: 预处理结果
@@ -39,6 +39,9 @@ class PreprocessService:
                     'message': f"文件缺少必要的列: {', '.join(missing_columns)}"
                 }
 
+            # 将产品ID转换为字符串，以确保类型一致性
+            df['prod_id'] = df['prod_id'].astype(str)
+
             # 将日期列转换为日期类型
             df['date'] = pd.to_datetime(df['date'])
 
@@ -55,11 +58,21 @@ class PreprocessService:
             # 处理的产品和生成的文件信息
             processed_files = []
 
-            # 如果指定了产品ID，只处理该产品
-            if prod_id:
-                product_ids = [prod_id] if prod_id in df['prod_id'].unique() else []
-                if not product_ids:
-                    return {'status': 'error', 'message': f'没有找到产品ID为 {prod_id} 的数据'}
+            # 处理商品ID的逻辑
+            if prod_id is not None:
+                # 将输入的prod_id转换为字符串
+                prod_id = str(prod_id)
+
+                # 检查是否存在指定的产品ID
+                if prod_id not in df['prod_id'].unique():
+                    return {
+                        'status': 'error',
+                        'message': f'没有找到产品ID为 {prod_id} 的数据',
+                        'available_product_ids': list(df['prod_id'].unique())
+                    }
+
+                # 如果存在，只处理该产品
+                product_ids = [prod_id]
             else:
                 # 否则处理所有产品
                 product_ids = df['prod_id'].unique()
@@ -126,7 +139,8 @@ class PreprocessService:
                 'processed_files': processed_files,
                 'summary': {
                     'total_products': len(processed_files),
-                    'original_file': file_path
+                    'original_file': file_path,
+                    'all_product_ids': list(df['prod_id'].unique())
                 }
             }
 

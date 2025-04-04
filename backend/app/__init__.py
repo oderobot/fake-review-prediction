@@ -9,6 +9,14 @@ import pkgutil
 def create_app():
     app = Flask(__name__)
 
+    # 手动添加CORS头
+    @app.after_request
+    def add_cors_headers(response):
+        response.headers.add('Access-Control-Allow-Origin', '*')
+        response.headers.add('Access-Control-Allow-Headers', 'Content-Type,Authorization')
+        response.headers.add('Access-Control-Allow-Methods', 'GET,PUT,POST,DELETE,OPTIONS')
+        return response
+
     # 添加根路由
     @app.route('/')
     def home():

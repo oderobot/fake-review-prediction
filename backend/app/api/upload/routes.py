@@ -69,3 +69,33 @@ def validate_file():
         'message': '文件格式验证通过',
         'file_info': validation_result
     })
+
+
+# 在 backend/app/api/upload/routes.py 中添加
+
+@upload_bp.route('/get-full-data', methods=['POST'])
+def get_full_data():
+    """获取完整文件数据"""
+    data = request.json
+    file_path = data.get('file_path') or data.get('filepath')  # 兼容两种字段名
+
+    if not file_path or not os.path.exists(file_path):
+        return jsonify({
+            'status': 'error',
+            'message': '文件不存在'
+        }), 400
+
+    # 获取完整数据
+    result = UploadService.get_full_file_data(file_path)
+
+    if not result.get('valid', False):
+        return jsonify({
+            'status': 'error',
+            'message': result.get('message', '文件读取失败')
+        }), 400
+
+    return jsonify({
+        'status': 'success',
+        'message': '数据获取成功',
+        'file_data': result
+    })
